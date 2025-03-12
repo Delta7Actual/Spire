@@ -3,6 +3,7 @@
         "stddef.h": "c",
         "stdint.h": "c",
         "stdio.h": "c",
-        "http.h": "c"
+        "http.h": "c",
+        "core.h": "c"
     }
 }

@@ -1,12 +1,17 @@
 #include "server.h"
+#include "http.h"
+#include "utils.h"
+#include "builder.h"
+
+#include <stdio.h>
 
 typedef struct s_app {
-    char *title;
-    char *path;
+    Page *pages;
+    uint8_t p_count;
     uint16_t port;
 } App;
 
 char *html_s(const char *title);
 char *html_e();
 
-int app_launch(uint16_t port);
+int app_launch(App *app);
