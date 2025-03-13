@@ -2,3 +2,4 @@ public/
 *.o
 spire
 .vscode
+src/main.c
