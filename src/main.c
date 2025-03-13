@@ -1,41 +1,55 @@
 #include <stdio.h>
-#include <stddef.h>
-#include <stdint.h>
+
+// Step 0: Include the core.h file
+// Make sure the other h files are in the same directory
 #include "../include/core.h"
 
-int main(void) {
-    printf("%s\n", "Hello world!");
-
-    // Allocate memory for Page struct
-    Page *page = (Page *)malloc(sizeof(Page));
-    if (page == NULL) {
-        printf("Failed to allocate memory for page\n");
-        return 1; // Exit if memory allocation fails
+int main() {
+    // Step 1: Initialize the app
+    App app = {0};
+    app.port = 55555;
+    app.p_count = 1;  // Number of pages
+    app.pages = malloc(sizeof(Page) * app.p_count);
+    if (!app.pages) {
+        printf("(-) Failed to allocate memory for pages\n");
+        return -1;
     }
 
-    // Allocate memory for the strings and assign values
-    page->title = "TITLE";
-    page->body = "<h1>BODY TEXT</h1>";
-    page->path = "../skib.html";
-
-    // Allocate memory for App struct
-    App *app = (App *)malloc(sizeof(App));
-    if (app == NULL) {
-        printf("Failed to allocate memory for app\n");
-        free(page); // Free the previously allocated memory for page
-        return 1; // Exit if memory allocation fails
+    // Step 2: Create a page
+    Page *page = page_init("index");  // Page title will be "index"
+    if (!page) {
+        printf("(-) Failed to initialize page\n");
+        return -1;
     }
 
-    // Initialize app fields
-    app->port = 55555;
-    app->p_count = 1;
-    app->pages = page;
+    // Step 3: Add content to the page
+    add_heading(page, 1, "Welcome to My Website!");
+    add_div(page, "This is a sample div with some content.");
+    add_anchor(page, "/about", "About Us");
 
-    app_launch(app);
+    // Step 4: Render the page to a file
+    if (page_render(page) != 0) {
+        printf("(-) Failed to render the page\n");
+        return -1;
+    }
 
-    // Clean up
-    free(page); // Free the page memory
-    free(app);  // Free the app memory
+    // Step 5: Initialize the app with the created page
+    app.pages[0] = *page;  // Assign the page to the app
+
+    // Step 6: Launch the app
+    if (app_launch(&app) != 0) {
+        printf("(-) Failed to launch the app\n");
+        return -1;
+    }
+
+    // Step 7: Clean up
+    free(page->title);
+    free(page->body);
+    free(page->path);
+    free(page);
+
+    // Clean up app memory
+    free(app.pages);
 
     return 0;
 }

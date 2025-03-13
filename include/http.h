@@ -5,9 +5,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // Function prototypes for request and response handling
 char *parse_request(const char *request, size_t len);
-int  build_response(uint8_t status_code, const char *body, char *response_buffer);
+char *build_response(int status_code, const char *body);
 
 #endif

@@ -11,7 +11,4 @@ typedef struct s_app {
     uint16_t port;
 } App;
 
-char *html_s(const char *title);
-char *html_e();
-
 int app_launch(App *app);

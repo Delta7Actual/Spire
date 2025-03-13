@@ -1,42 +1,61 @@
 #include "../include/core.h"
 
 int app_launch(App *app) {
-    if (app == NULL || app->p_count <= 0 || app->pages == NULL || app->port <= 5000) return -1;
+    if (!app || app->p_count <= 0 || !app->pages || app->port <= 5000) return -1;
+
+    printf("(*) Starting app...\n");
 
     int server = open_conn(app->port);
     if (server < 0) return -1;
-    printf("%s%d\n", "Site up on: http://localhost:", app->port);
+
+    printf("=========================\n%s%d%s\n=========================\n"
+        , "Site up on: http://localhost:", app->port, "/{Page_Name}!");
+    
+    printf("Available pages:\n-------------------------\n");
+    for (int i = 0; i < app->p_count; i++) {
+        printf("%d. %s%d/%s\n-------------------------\n\n\n"
+            , i+1, "http://localhost:", app->port, app->pages[i].title);
+    }
 
     while (1) {
         Conn *conn = connect_conn(server);
-        if (conn == NULL) continue;
+        if (!conn) break;
 
         char buff[1024] = {0};
         int rb = recv(conn->client_sock, buff, sizeof(buff)-1, 0);
         if (rb <= 0) {
             close_conn(conn);
-            continue;
+            break;
         }
 
         buff[rb] = '\0';
         printf("Received data! :\n%s\n", buff);
         char *path = parse_request(buff, rb);
 
-        int res_msg = 404;
-        char *res_body = "<h1>404 NOT FOUND!</h1>";
-        char res_buff[1024] = {0};
+        int code = 404;
+        char *body = "<h1>404 Page not found!</h1>";
 
-        if (path != NULL) {
-            res_msg = 200;
-            res_body = "<h1>200 OK!</h1>\n<h2>Hello from server!</h2>";
+        int found = 0;
+        for (int i = 0; i < app->p_count; i++) {
+            if (strncmp(app->pages[i].title, path, strlen(app->pages[i].title)) == 0) {
+                found = 1;
+                body = read_file(app->pages[i].path);
+                break;
+            }
         }
 
-        if (build_response(res_msg, res_body, res_buff) < 0) {
-            close_conn(conn);
-            continue;
+        printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
+        if (found) code = 200;
+
+        char *response = build_response(code, body);
+        if (response) {
+            send(conn->client_sock, response, strlen(response), 0);
+            if (found) free(body);
+            free(response);
         }
-        printf("Sending response!\n%s\n", res_buff);
-        send(conn->client_sock, res_buff, strlen(res_buff), 0);
+
         close_conn(conn);
     }
+
+    return 0;
 }
