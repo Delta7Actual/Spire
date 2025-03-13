@@ -1,0 +1,4 @@
+public/
+*.o
+spire
+.vscode/
