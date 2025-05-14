@@ -49,7 +49,7 @@ Conn *connect_conn(int server_sock) {
 }
 
 int cycle_client(Conn *conn) {
-    printf("Cycling client...");
+    printf("Cycling client...\n");
     if (!conn) return -1;
 
     close(conn->client_sock);

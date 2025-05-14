@@ -9,6 +9,7 @@
 
 // Function prototypes for request and response handling
 char *parse_request(const char *request, size_t len);
-char *build_response(int status_code, const char *body);
+char *build_response(int status_code, const char *con_type, const char *body);
+const char *get_con_type(const char * path);
 
 #endif

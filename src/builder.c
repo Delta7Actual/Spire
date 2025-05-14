@@ -26,10 +26,10 @@ int page_render(Page *page) {
     FILE *output = fopen(page->path, "w");
     if (!output) return -1;
 
-    fprintf(output, "<!DOCTYPE html>\n<html>\n<head>\n<title>%s</title>\n</head>\n<body>\n%s\n</body>\n</html>", 
+    fprintf(output, "<!DOCTYPE html>\n<html>\n<head>\n<title>%s</title>\n</head><link rel=\"stylesheet\" href=\"public/styleSheet.css\">\n<body>\n%s\n</body>\n</html>", 
             page->title, page->body);
 
-    printf("(+) Page rendered successfully and aved to: %s\n\n", page->path);
+    printf("(+) Page rendered successfully and saved to: %s\n\n", page->path);
     fclose(output);
     return 0;
 }

@@ -24,7 +24,7 @@ int app_launch(App *app) {
         char buff[1024] = {0};
         int rb = recv(conn->client_sock, buff, sizeof(buff)-1, 0);
         if (rb <= 0) {
-            close_conn(server);
+            cycle_client(conn);
             continue;
         }
 
@@ -32,26 +32,56 @@ int app_launch(App *app) {
         printf("Received data! :\n%s\n", buff);
         char *path = parse_request(buff, rb);
 
-        int code = 404;
-        char *body = "<h1>404 Page not found!</h1>";
-
+        char file_path[256] = {0};
+        char *body = NULL;
         int found = 0;
-        for (int i = 0; i < app->p_count; i++) {
-            if (strncmp(app->pages[i].title, path, strlen(app->pages[i].title)) == 0) {
+
+        for (int i = 0; i < app->p_count; i++) { // Search HTML files
+            // Skipping the slash
+            if (strncmp(app->pages[i].title, path + 1, strlen(app->pages[i].title)) == 0) {
+                snprintf(file_path, sizeof(file_path), "%s", app->pages[i].path);
                 found = 1;
-                body = read_file(app->pages[i].path);
                 break;
             }
         }
 
-        printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
-        if (found) code = 200;
+        if (!found) { // Search CSS files
+            snprintf(file_path, sizeof(file_path), ".%s", path); // keep the slash
+            found = access(file_path, F_OK) == 0;
+        } 
 
-        char *response = build_response(code, body);
+        if (found) {
+            printf("Resolved file path: %s\n", file_path);
+            body = read_file(file_path);
+            if (!body) found = 0;
+        }
+
+        int code = 404;
+        const char *content_type = "text/html";
+
+        if (found) {
+            body = read_file(file_path);
+            if (!body) {
+                found = 0;
+            } else {
+                content_type = get_con_type(file_path);
+                code = 200;
+            }
+        }
+
+        if (!found) {
+            body = "<h1 style=\"text-align:center\">404 Not Found</h1>";
+            content_type = "text/html";
+        }
+
+        printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
+        printf("Sending... MIME: %s | CODE: %d | PATH: %s\n", content_type, code, path);
+
+        char *response = build_response(code, content_type, body);
         if (response) {
             ssize_t sent = send(conn->client_sock, response, strlen(response), 0);
             printf("Sent %zd bytes\n", sent);
-            if (found) free(body);
+            if (found && body) free(body);
             free(response);
         }
 
