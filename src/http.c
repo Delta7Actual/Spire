@@ -18,15 +18,21 @@ char *build_response(int code, const char *body) {
     if (!body || code <= 0) return NULL;
 
     const char *res_msg = (code == 200) ? "OK" : "Not Found";
-    size_t res_len = strlen("HTTP/1.1 ") + 3 + strlen(res_msg) + strlen("\r\nContent-Type: text/html\r\nContent-Length: ") + 10 + strlen("\r\n\r\n") + strlen(body);
+    const char *header_fmt =
+        "HTTP/1.1 %d %s\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: %zu\r\n"
+        "Connection: close\r\n"
+        "\r\n"
+        "%s";
 
-    char *res_buff = malloc(res_len + 1);
+    // Calculate actual length needed
+    size_t body_len = strlen(body);
+    size_t header_len = snprintf(NULL, 0, header_fmt, code, res_msg, body_len, body);
+
+    char *res_buff = malloc(header_len + 1);
     if (!res_buff) return NULL;
 
-    snprintf(res_buff,
-        res_len + 1,
-        "HTTP/1.1 %d %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s",
-        code, res_msg, strlen(body), body);
-
+    snprintf(res_buff, header_len + 1, header_fmt, code, res_msg, body_len, body);
     return res_buff;
 }

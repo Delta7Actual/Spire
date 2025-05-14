@@ -7,7 +7,7 @@
 int main() {
     // Step 1: Initialize the app
     App app = {0};
-    app.port = 55555;
+    app.port = 5500;
     app.p_count = 1;  // Number of pages
     app.pages = malloc(sizeof(Page) * app.p_count);
     if (!app.pages) {
@@ -47,8 +47,6 @@ int main() {
     free(page->body);
     free(page->path);
     free(page);
-
-    // Clean up app memory
     free(app.pages);
 
     return 0;

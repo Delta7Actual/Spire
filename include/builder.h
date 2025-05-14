@@ -1,5 +1,5 @@
-#ifndef addER_H
-#define addER_H
+#ifndef BUILDER_H
+#define BUILDER_H
 
 #include <string.h>
 #include <stdio.h>

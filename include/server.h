@@ -11,12 +11,12 @@
 #include <stdlib.h>
 
 typedef struct s_conn {
-    int server_sock;
     int client_sock;
 } Conn;
 
 int open_conn(uint16_t port);
 Conn *connect_conn(int server_sock);
-int close_conn(Conn *conn);
+int cycle_client(Conn *conn);
+int close_conn(int server_sock);
 
 #endif

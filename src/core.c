@@ -19,13 +19,13 @@ int app_launch(App *app) {
 
     while (1) {
         Conn *conn = connect_conn(server);
-        if (!conn) break;
+        if (!conn) continue;
 
         char buff[1024] = {0};
         int rb = recv(conn->client_sock, buff, sizeof(buff)-1, 0);
         if (rb <= 0) {
-            close_conn(conn);
-            break;
+            close_conn(server);
+            continue;
         }
 
         buff[rb] = '\0';
@@ -49,13 +49,15 @@ int app_launch(App *app) {
 
         char *response = build_response(code, body);
         if (response) {
-            send(conn->client_sock, response, strlen(response), 0);
+            ssize_t sent = send(conn->client_sock, response, strlen(response), 0);
+            printf("Sent %zd bytes\n", sent);
             if (found) free(body);
             free(response);
         }
 
-        close_conn(conn);
+        cycle_client(conn);
     }
 
+    close_conn(server);
     return 0;
 }
