@@ -1,22 +1,22 @@
 #include "../include/builder.h"
 
-Page *page_init(const char *title) {
+Page *page_init(const char *title, const char *style) {
     if (!title) return NULL;
-    printf("(*) Creating page...\n");
+    log_print(0, "Creating page..");
     
     Page *page = malloc(sizeof(Page));
     if (!page) return NULL;
 
     page->title = strdup(title);
     page->body = strdup("");
+    page->style = style ? strdup(style) : NULL;
 
-    printf("(+) Page created successfully!\n\n");
     return page;
 }
 
 int page_render(Page *page) {
     if (!page || !page->title) return -1;
-    printf("(*) Rendering page...\n");
+    log_print(0, "Rendering page...");
 
     size_t path_len = strlen(page->title) + strlen("public/.html") + 1;
     page->path = malloc(path_len);
@@ -26,17 +26,23 @@ int page_render(Page *page) {
     FILE *output = fopen(page->path, "w");
     if (!output) return -1;
 
-    fprintf(output, "<!DOCTYPE html>\n<html>\n<head>\n<title>%s</title>\n</head><link rel=\"stylesheet\" href=\"public/styleSheet.css\">\n<body>\n%s\n</body>\n</html>", 
+    if (!page->style) {
+        fprintf(output,
+            "<!DOCTYPE html>\n<html>\n<head>\n<title>%s</title>\n</head><body>\n%s\n</body>\n</html>", 
             page->title, page->body);
+    } else { // <link rel=\"stylesheet\" href=\"public/styleSheet.css\">\n
+        fprintf(output,
+            "<!DOCTYPE html>\n<html>\n<head>\n<title>%s</title>\n<link rel=\"stylesheet\" href=\"%s\">\n</head><body>\n%s\n</body>\n</html>", 
+            page->title, page->style, page->body);
+    }
 
-    printf("(+) Page rendered successfully and saved to: %s\n\n", page->path);
     fclose(output);
     return 0;
 }
 
 int add_heading(Page *page, uint8_t mag, const char *content) {
     if (!page || !content || mag < 1 || mag > 6) return -1;
-    printf("(*) Building [heading] on page: %s...\n", page->title);
+    log_print(0, "Building [heading]...");
     
     char heading[1024];
     snprintf(heading, sizeof(heading), "<h%d>%s</h%d>", mag, content, mag);
@@ -47,13 +53,12 @@ int add_heading(Page *page, uint8_t mag, const char *content) {
     if (!page->body) return -1;
     strcat(page->body, heading);
 
-    printf("(+) [heading] addition on page: %s successful!\n\n", page->title);
     return 0;
 }
 
 int add_div(Page *page, const char *content) {
     if (!page || !content) return -1;
-    printf("(*) Building [div] on page: %s...\n", page->title);
+    log_print(0, "Building [div]...");
 
     char div[1024];
     snprintf(div, sizeof(div), "<div>%s</div>", content);
@@ -64,13 +69,12 @@ int add_div(Page *page, const char *content) {
     if (!page->body) return -1;
     strcat(page->body, div);
 
-    printf("(+) [div] addition on page: %s successful!\n\n", page->title);
     return 0;
 }
 
 int add_anchor(Page *page, const char *url, const char *content) {
     if (!page || !url || !content) return -1;
-    printf("(*) Building [anchor] on page: %s...\n", page->title);
+    log_print(0, "Building [anchor]...");
 
     char anchor[1024];
     snprintf(anchor, sizeof(anchor), "<a href=\"%s\">%s</a>", url, content);
@@ -81,15 +85,12 @@ int add_anchor(Page *page, const char *url, const char *content) {
     if (!page->body) return -1;
     strcat(page->body, anchor);
 
-    printf("(+) [anchor] addition on page: %s successful!\n\n", page->title);
     return 0;
 }
 
 char *read_file(const char *file_path) {
     FILE *file = fopen(file_path, "r");
     if (!file) return NULL;
-
-    printf("(*) Reading file: %s...\n", file_path);
 
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
@@ -102,6 +103,5 @@ char *read_file(const char *file_path) {
     buffer[file_size] = '\0';
     fclose(file);
 
-    printf("(+) Reading from file: %s successful!\n\n", file_path);
     return buffer;
 }

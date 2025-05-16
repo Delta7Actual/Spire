@@ -1,52 +1,65 @@
 #include <stdio.h>
-
-// Step 0: Include the core.h file
-// Make sure the other h files are in the same directory
-#include "../include/core.h"
+#include <stdlib.h>
+#include "../include/builder.h"
+#include "../include/core.h" // Step 0: Include the core header
 
 int main() {
     // Step 1: Initialize the app
     App app = {0};
     app.port = 5500;
-    app.p_count = 1;  // Number of pages
+    app.p_count = 2;
     app.pages = malloc(sizeof(Page) * app.p_count);
     if (!app.pages) {
         printf("(-) Failed to allocate memory for pages\n");
         return -1;
     }
 
-    // Step 2: Create a page
-    Page *page = page_init("index");  // Page title will be "index"
-    if (!page) {
-        printf("(-) Failed to initialize page\n");
+    // Step 2: Create pages
+    Page *index = page_init("index", "public/style.css");
+    Page *contact = page_init("contact", "public/contactstyle.css");
+
+    if (!index || !contact) {
+        printf("(-) Failed to initialize one or more pages\n");
         return -1;
     }
 
-    // Step 3: Add content to the page
-    add_heading(page, 1, "Welcome to My Website!");
-    add_div(page, "This is a sample div with some content.");
-    add_anchor(page, "/about", "About Us");
+    // Step 3: Add content to "index" page
+    add_heading(index, 1, "Welcome to DevBlog!");
+    add_div(index, "This is the homepage of a fictional blog for developers.");
+    add_anchor(index, "/contact", "Contact Us");
 
-    // Step 4: Render the page to a file
-    if (page_render(page) != 0) {
-        printf("(-) Failed to render the page\n");
+    // Step 4: Add content to "contact" page
+    add_heading(contact, 2, "Get in Touch");
+    add_div(contact, "Feel free to reach out to us at dev@blog.com.");
+    add_anchor(contact, "/index", "Go Back Home");
+
+    // Step 5: Render both pages
+    if (page_render(index) != 0 || page_render(contact) != 0) {
+        printf("(-) Failed to render one or more pages\n");
         return -1;
     }
 
-    // Step 5: Initialize the app with the created page
-    app.pages[0] = *page;  // Assign the page to the app
+    // Step 6: Add pages to the app
+    app.pages[0] = *index;
+    app.pages[1] = *contact;
 
-    // Step 6: Launch the app
+    // Step 7: Launch app
     if (app_launch(&app) != 0) {
         printf("(-) Failed to launch the app\n");
         return -1;
     }
 
-    // Step 7: Clean up
-    free(page->title);
-    free(page->body);
-    free(page->path);
-    free(page);
+    // Step 8: Clean up
+    free(index->title);
+    free(index->path);
+    free(index->body);
+    free(index);
+
+    free(contact->title);
+    free(contact->path);
+    free(contact->body);
+    free(contact);
+
     free(app.pages);
 
     return 0;

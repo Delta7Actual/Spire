@@ -1,6 +1,8 @@
 #ifndef BUILDER_H
 #define BUILDER_H
 
+#include "utils.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +13,10 @@ typedef struct s_page {
     char *title;
     char *path;
     char *body;
+    char *style; // This is optional
 } Page;
+
+// Implement as structs even necessary?
 
 // typedef struct s_heading {
 //     uint8_t mag;
@@ -27,12 +32,14 @@ typedef struct s_page {
 //     char *content;
 // } Anchor;
 
-Page *page_init(const char *title);
+Page *page_init(const char *title, const char *style);
 int page_render(Page *page);
 
 int add_heading(Page *page, uint8_t mag, const char *content);
 int add_div(Page *page, const char *content);
 int add_anchor(Page *page, const char *url, const char *content);
+
+// Add more elements
 
 char *read_file(const char *file_path);
 

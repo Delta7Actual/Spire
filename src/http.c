@@ -38,7 +38,10 @@ const char *get_con_type(const char *path) {
     if (!ext) return "text/plain";
 
     if (strcmp(ext, ".html") == 0) return "text/html";
-    if (strcmp(ext, ".css") == 0) return "text/css";
+    if (strcmp(ext, ".css")  == 0) return "text/css";
+    if (strcmp(ext, ".js")   == 0) return "application/javascript";
+    if (strcmp(ext, ".png")  == 0) return "image/png";
+    if (strcmp(ext, ".jpg")  == 0 || strcmp(ext, ".jpeg") == 0) return "image/jpeg";
 
-    return "text/plain"; // Add other types.
+    return "application/octet-stream";
 }

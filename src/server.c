@@ -43,13 +43,10 @@ Conn *connect_conn(int server_sock) {
     }
 
     conn->client_sock = client_sock;
-
-    printf("Client connected. Client socket: %d\n", client_sock);
     return conn;
 }
 
 int cycle_client(Conn *conn) {
-    printf("Cycling client...\n");
     if (!conn) return -1;
 
     close(conn->client_sock);

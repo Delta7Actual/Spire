@@ -3,19 +3,26 @@
 int app_launch(App *app) {
     if (!app || app->p_count <= 0 || !app->pages || app->port <= 5000) return -1;
 
-    printf("(*) Starting app...\n");
+    log_print(0, "Starting app...\n");
 
     int server = open_conn(app->port);
     if (server < 0) return -1;
 
-    printf("=========================\n%s%d%s\n=========================\n"
-        , "Site up on: http://localhost:", app->port, "/{Page_Name}!");
+    // printf("=========================\n%s%d\n=========================\n"
+    //     , "Site up on: http://localhost:", app->port);
+
+    log_banner("SERVER START", 12);
+    log_site(app->port);
     
-    printf("Available pages:\n-------------------------\n");
+    printf("%sAvailable pages:%s\n", BOLD, RESET);
     for (int i = 0; i < app->p_count; i++) {
-        printf("%d. %s%d/%s\n-------------------------\n\n\n"
-            , i+1, "http://localhost:", app->port, app->pages[i].title);
+        // printf("%d. %s%d/%s\n-------------------------\n"
+        //     , i+1, "http://localhost:", app->port, app->pages[i].title);
+        printf("  - %s%u/%s\n",
+            "http://localhost:", app->port, app->pages[i].title);
     }
+
+    printf("\n========================================\n\n");
 
     while (1) {
         Conn *conn = connect_conn(server);
@@ -29,7 +36,8 @@ int app_launch(App *app) {
         }
 
         buff[rb] = '\0';
-        printf("Received data! :\n%s\n", buff);
+        //printf("Received data! :\n%zu bytes\n", strlen(buff));
+        log_read(strlen(buff));
         char *path = parse_request(buff, rb);
 
         char file_path[256] = {0};
@@ -45,7 +53,7 @@ int app_launch(App *app) {
             }
         }
 
-        if (!found) { // Search CSS files
+        if (!found) { // Search static files (eg. CSS, PNG, JS...)
             snprintf(file_path, sizeof(file_path), ".%s", path); // keep the slash
             found = access(file_path, F_OK) == 0;
         } 
@@ -74,13 +82,14 @@ int app_launch(App *app) {
             content_type = "text/html";
         }
 
-        printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
-        printf("Sending... MIME: %s | CODE: %d | PATH: %s\n", content_type, code, path);
+        // printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
+        // printf("Sending... MIME: %s | CODE: %d | PATH: %s\n", content_type, code, path);
 
         char *response = build_response(code, content_type, body);
         if (response) {
             ssize_t sent = send(conn->client_sock, response, strlen(response), 0);
-            printf("Sent %zd bytes\n", sent);
+            //printf("Sent %zd bytes\n", sent);
+            log_sent(sent, content_type, code);
             if (found && body) free(body);
             free(response);
         }
