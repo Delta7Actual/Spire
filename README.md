@@ -1,4 +1,4 @@
-# Web Server in C
+# SPIRE - Web-Dev in C
 
 A simple HTTP server in C that can serve static HTML files based on the user's request. This is designed to be a web-tool for C users, where they can create sites programmatically!
 
