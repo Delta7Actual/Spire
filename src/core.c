@@ -8,20 +8,13 @@ int app_launch(App *app) {
     int server = open_conn(app->port);
     if (server < 0) return -1;
 
-    // printf("=========================\n%s%d\n=========================\n"
-    //     , "Site up on: http://localhost:", app->port);
-
     log_banner("SERVER START", 12);
     log_site(app->port);
-    
+
     printf("%sAvailable pages:%s\n", BOLD, RESET);
     for (int i = 0; i < app->p_count; i++) {
-        // printf("%d. %s%d/%s\n-------------------------\n"
-        //     , i+1, "http://localhost:", app->port, app->pages[i].title);
-        printf("  - %s%u/%s\n",
-            "http://localhost:", app->port, app->pages[i].title);
+        printf("  - http://localhost:%u/%s\n", app->port, app->pages[i].title);
     }
-
     printf("\n========================================\n\n");
 
     while (1) {
@@ -29,23 +22,25 @@ int app_launch(App *app) {
         if (!conn) continue;
 
         char buff[1024] = {0};
-        int rb = recv(conn->client_sock, buff, sizeof(buff)-1, 0);
+        int rb = recv(conn->client_sock, buff, sizeof(buff) - 1, 0);
         if (rb <= 0) {
             cycle_client(conn);
             continue;
         }
 
         buff[rb] = '\0';
-        //printf("Received data! :\n%zu bytes\n", strlen(buff));
         log_read(strlen(buff));
         char *path = parse_request(buff, rb);
 
         char file_path[256] = {0};
-        char *body = NULL;
         int found = 0;
+        char *body = NULL;
+        size_t body_len = 0;
+        const char *content_type = NULL;
+        int code = 404;
 
-        for (int i = 0; i < app->p_count; i++) { // Search HTML files
-            // Skipping the slash
+        // Look for HTML page match
+        for (int i = 0; i < app->p_count; i++) {
             if (strncmp(app->pages[i].title, path + 1, strlen(app->pages[i].title)) == 0) {
                 snprintf(file_path, sizeof(file_path), "%s", app->pages[i].path);
                 found = 1;
@@ -53,43 +48,41 @@ int app_launch(App *app) {
             }
         }
 
-        if (!found) { // Search static files (eg. CSS, PNG, JS...)
-            snprintf(file_path, sizeof(file_path), ".%s", path); // keep the slash
+        // Static file fallback (CSS, PNG, etc.)
+        if (!found) {
+            snprintf(file_path, sizeof(file_path), ".%s", path);
             found = access(file_path, F_OK) == 0;
-        } 
-
-        if (found) {
-            printf("Resolved file path: %s\n", file_path);
-            body = read_file(file_path);
-            if (!body) found = 0;
         }
 
-        int code = 404;
-        const char *content_type = "text/html";
-
         if (found) {
-            body = read_file(file_path);
-            if (!body) {
-                found = 0;
+            content_type = get_con_mime(file_path);
+
+            if (is_bin_mime(content_type)) {
+                body = read_file_bin(file_path, &body_len);
             } else {
-                content_type = get_con_type(file_path);
+                body = read_file(file_path);
+                if (body) body_len = strlen(body);
+            }
+
+            if (body) {
                 code = 200;
+            } else {
+                found = 0; // fallback to 404
             }
         }
 
         if (!found) {
             body = "<h1 style=\"text-align:center\">404 Not Found</h1>";
+            body_len = strlen(body);
             content_type = "text/html";
         }
 
-        // printf("FOUND: %d | LOOKED FOR: %s\n", found, path);
-        // printf("Sending... MIME: %s | CODE: %d | PATH: %s\n", content_type, code, path);
-
-        char *response = build_response(code, content_type, body);
+        size_t header_len = 0;
+        char *response = build_response_bin(code, content_type, body, body_len, &header_len);
         if (response) {
-            ssize_t sent = send(conn->client_sock, response, strlen(response), 0);
-            //printf("Sent %zd bytes\n", sent);
+            ssize_t sent = send(conn->client_sock, response, header_len + body_len, 0);
             log_sent(sent, content_type, code);
+
             if (found && body) free(body);
             free(response);
         }

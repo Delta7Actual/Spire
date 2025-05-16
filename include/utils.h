@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define RESET       "\033[0m"
 
@@ -59,5 +60,8 @@ void log_read(size_t bytes);
 
 void log_banner(char *msg, size_t len);
 void log_site(__uint16_t port);
+
+char *read_file(const char *file_path);
+char *read_file_bin(const char *file_path, size_t *out_size);
 
 #endif

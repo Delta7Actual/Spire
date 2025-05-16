@@ -31,7 +31,28 @@ char *build_response(int code, const char *con_type, const char *body) {
     return res_buff;
 }
 
-const char *get_con_type(const char *path) {
+char *build_response_bin(int code, const char *type, const char *body, size_t body_len, size_t *out_header_len) {
+    char header[512];
+    const char *msg = (code == 200) ? "OK" : "Not Found";
+
+    int hlen = snprintf(header, sizeof(header),
+        "HTTP/1.1 %d %s\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Length: %zu\r\n"
+        "Connection: close\r\n"
+        "\r\n",
+        code, msg, type, body_len);
+
+    char *response = malloc(hlen + body_len);
+    if (!response) return NULL;
+
+    memcpy(response, header, hlen);
+    memcpy(response + hlen, body, body_len);
+    *out_header_len = hlen;
+    return response;
+}
+
+const char *get_con_mime(const char *path) {
     if (!path) return "text/plain";
 
     const char *ext = strrchr(path, '.');
@@ -44,4 +65,10 @@ const char *get_con_type(const char *path) {
     if (strcmp(ext, ".jpg")  == 0 || strcmp(ext, ".jpeg") == 0) return "image/jpeg";
 
     return "application/octet-stream";
+}
+
+int is_bin_mime(const char *mime) {
+    return strncmp(mime, "image/", 6) == 0
+        || strcmp(mime, "application/octet-stream") == 0
+        || strcmp(mime, "application/javascript")   == 0;
 }
