@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -I../include
 TARGET = spire
-SRC = src/core.c src/http.c src/server.c src/utils.c src/main.c src/builder.c
+SRC = src/core.c src/http.c src/server.c src/utils.c src/example.c src/builder.c
 OBJ = $(SRC:.c=.o)
 
 all: $(TARGET)
